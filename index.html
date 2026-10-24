@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>캐치! 티니핑 한글 놀이 게임</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink-main: #ff5c93;
+      --pink-dark: #e03572;
+      --pink-light: #ffe4ef;
+      --pink-bg: #fff5f9;
+      --purple-main: #9b5de5;
+      --purple-dark: #753bbd;
+      --yellow-main: #ffca3a;
+      --mint-main: #00bbf9;
+      --green-correct: #2ec4b6;
+      --red-wrong: #ff6b6b;
+      --text-dark: #3d2645;
+      --card-shadow: 0 12px 28px rgba(255, 92, 147, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Jua', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+      background: radial-gradient(circle at top, #ffe3f1 0%, #fff6fa 55%, #f3e8ff 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 배경 장식 애니메이션 */
+    .bg-decor {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .floating-icon {
+      position: absolute;
+      font-size: 1.8rem;
+      opacity: 0.25;
+      animation: floatUp 12s linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(105vh) rotate(0deg) scale(0.8); opacity: 0; }
+      15% { opacity: 0.28; }
+      85% { opacity: 0.28; }
+      100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.35s ease-out;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================= 홈 화면 ================= */
+    .hero-header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff7eb3, #ff4d88);
+      color: #fff;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 12px rgba(255, 77, 136, 0.35);
+      margin-bottom: 10px;
+    }
+
+    .hero-title {
+      font-size: clamp(2.1rem, 5vw, 3.2rem);
+      margin: 4px 0 8px;
+      color: #d81b60;
+      text-shadow: 0 3px 0 #fff, 0 6px 14px rgba(216, 27, 96, 0.22);
+      letter-spacing: 1px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+      color: #6d4c7d;
+      margin: 0;
+    }
+
+    /* 옵션 바 (문제 수 & 음성 설정) */
+    .settings-bar {
+      background: rgba(255, 255, 255, 0.9);
+      border: 3px solid #ffc2d9;
+      border-radius: 22px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 6px 18px rgba(255, 92, 147, 0.1);
+    }
+
+    .setting-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .setting-label {
+      font-size: 1.15rem;
+      color: #ad1457;
+      margin-right: 4px;
+    }
+
+    .pill-btn {
+      font-family: inherit;
+      font-size: 1.05rem;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 2px solid #ff9ec2;
+      background: #fff;
+      color: #c2185b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pill-btn.active {
+      background: var(--pink-main);
+      color: #fff;
+      border-color: var(--pink-main);
+      box-shadow: 0 4px 10px rgba(255, 92, 147, 0.35);
+      transform: scale(1.04);
+    }
+
+    /* 시즌 1~6 + 종합 (7개 버튼 그리드) */
+    .season-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (min-width: 720px) {
+      .season-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .season-btn {
+      position: relative;
+      font-family: inherit;
+      background: #fff;
+      border: 4px solid #ffb3d1;
+      border-radius: 26px;
+      padding: 16px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 8px 0 #f48fb1, 0 12px 24px rgba(255, 92, 147, 0.16);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .season-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 0 #f06292, 0 16px 28px rgba(255, 92, 147, 0.26);
+      border-color: var(--pink-main);
+    }
+
+    .season-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 #f06292;
+    }
+
+    .season-btn .season-tag {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .season-btn .thumb-wrap {
+      width: 110px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0 10px;
+      background: radial-gradient(circle, #fff0f6 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .season-btn .thumb-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.12));
+      transition: transform 0.25s ease;
+    }
+
+    .season-btn:hover .thumb-wrap img {
+      transform: scale(1.1) rotate(-3deg);
+    }
+
+    .season-btn .season-name {
+      font-size: 1.45rem;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .season-btn .season-count {
+      font-size: 1rem;
+      color: #8e6c9e;
+    }
+
+    /* 시즌별 테마 컬러 */
+    .season-1 .season-tag { background: #ff5c93; }
+    .season-2 .season-tag { background: #00b4d8; }
+    .season-3 .season-tag { background: #9b5de5; }
+    .season-4 .season-tag { background: #ff9f1c; }
+    .season-5 .season-tag { background: #4361ee; }
+    .season-6 .season-tag { background: #f15bb5; }
+
+    /* 7번째 종합 버튼: 전체 가로 폭 차지 */
+    .season-all {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #fff9db 0%, #ffe3f1 50%, #e8d7ff 100%);
+      border: 4px solid #ff85b3;
+      box-shadow: 0 9px 0 #e05288, 0 14px 30px rgba(224, 82, 136, 0.25);
+      flex-direction: row;
+      justify-content: center;
+      gap: 24px;
+      padding: 18px 24px;
+    }
+
+    .season-all .season-tag {
+      background: linear-gradient(90deg, #ff4d88, #9b5de5);
+      font-size: 1.05rem;
+    }
+
+    .season-all .multi-thumbs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .season-all .multi-thumbs img {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.14));
+    }
+
+    @media (max-width: 600px) {
+      .season-all {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .season-all .multi-thumbs img {
+        width: 52px;
+        height: 52px;
+      }
+    }
+
+    /* ================= 퀴즈 게임 화면 ================= */
+    .quiz-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      font-family: inherit;
+      font-size: 1.15rem;
+      background: #fff;
+      color: #c2185b;
+      border: 3px solid #ff9ec2;
+      border-radius: 16px;
+      padding: 8px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #f48fb1;
+      transition: transform 0.1s;
+    }
+
+    .nav-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #f48fb1;
+    }
+
+    .status-pills {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      background: #fff;
+      border: 3px solid #ffc2d9;
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 1.15rem;
+      color: #ad1457;
+      box-shadow: 0 4px 10px rgba(255, 92, 147, 0.12);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      background: #ffe0ec;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      border: 2px solid #ffb3d1;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff5c93, #ffca3a);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* 문제 카드 */
+    .quiz-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid #ffb3d1;
+      border-radius: 30px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+      position: relative;
+    }
+
+    .question-prompt {
+      font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+      color: #ad1457;
+      margin: 0 0 10px;
+    }
+
+    .char-meta-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      font-size: 0.95rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #f8e8ff;
+      color: #6a1b9a;
+    }
+
+    .image-stage {
+      position: relative;
+      width: 100%;
+      height: clamp(230px, 38vh, 320px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #fff0f7 0%, #ffffff 72%);
+      border-radius: 24px;
+      margin: 6px auto 14px;
+      overflow: hidden;
+    }
+
+    .image-stage img {
+      max-width: 92%;
+      max-height: 92%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(216, 27, 96, 0.2));
+      animation: gentleBounce 3s ease-in-out infinite;
+    }
+
+    @keyframes gentleBounce {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-8px) scale(1.03); }
+    }
+
+    /* 소리 듣기 & 힌트 도구 모음 */
+    .helper-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .helper-btn {
+      font-family: inherit;
+      font-size: 1.15rem;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 3px solid #ffd166;
+      background: #fff9db;
+      color: #b45309;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #f59e0b;
+      transition: transform 0.12s;
+    }
+
+    .helper-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #f59e0b;
+    }
+
+    .helper-btn.voice-btn {
+      border-color: #90e0ef;
+      background: #e0f7fa;
+      color: #0077b6;
+      box-shadow: 0 4px 0 #00b4d8;
+    }
+
+    .hint-box {
+      display: none;
+      background: #fff8e6;
+      border: 2px dashed #ffb703;
+      border-radius: 16px;
+      padding: 10px 16px;
+      margin: 0 auto 14px;
+      max-width: 640px;
+      font-size: 1.15rem;
+      color: #9a3412;
+    }
+
+    .hint-box.show {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    /* 한글 음절 학습 박스 (정답 시 노출) */
+    .syllable-learn-box {
+      display: none;
+      margin: 12px auto 16px;
+      padding: 14px;
+      background: linear-gradient(135deg, #e0fbfc, #fcefb4);
+      border: 3px solid #2ec4b6;
+      border-radius: 22px;
+      max-width: 680px;
+    }
+
+    .syllable-learn-box.show {
+      display: block;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .syllable-blocks {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .syllable-block {
+      width: 64px;
+      height: 64px;
+      background: #fff;
+      border: 3px solid #ff5c93;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: #d81b60;
+      box-shadow: 0 4px 0 #f48fb1;
+    }
+
+    .syllable-desc {
+      font-size: 1.15rem;
+      color: #1d3557;
+      margin: 6px 0 0;
+    }
+
+    /* 4지선다 큰 객관식 버튼 */
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 560px) {
+      .choices-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
+    .choice-btn {
+      font-family: inherit;
+      font-size: clamp(1.85rem, 4.5vw, 2.55rem);
+      padding: 20px 18px;
+      border-radius: 24px;
+      border: 4px solid #ffb3d1;
+      background: #fff;
+      color: var(--text-dark);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 8px 0 #f48fb1, 0 10px 20px rgba(255, 92, 147, 0.14);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s, border-color 0.2s;
+      letter-spacing: 2px;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      border-color: var(--pink-main);
+      background: #fff9fc;
+    }
+
+    .choice-btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 3px 0 #f48fb1;
+    }
+
+    .choice-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #ffe0ec;
+      color: #d81b60;
+      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .choice-text {
+      flex: 1;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .choice-speak {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #f3e8ff;
+      color: #7b2cbf;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+
+    .choice-speak:hover {
+      transform: scale(1.15);
+      background: #e0c3fc;
+    }
+
+    .choice-btn.correct {
+      background: #d8f3dc !important;
+      border-color: #2ec4b6 !important;
+      color: #0f5132 !important;
+      box-shadow: 0 8px 0 #2ec4b6 !important;
+      animation: pulseCorrect 0.5s ease;
+    }
+
+    .choice-btn.wrong {
+      background: #ffe3e3 !important;
+      border-color: #ff6b6b !important;
+      color: #a4161a !important;
+      box-shadow: 0 4px 0 #ff6b6b !important;
+      opacity: 0.65;
+      animation: shakeWrong 0.4s ease;
+    }
+
+    @keyframes pulseCorrect {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes shakeWrong {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .feedback-banner {
+      margin-top: 16px;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .feedback-msg {
+      font-size: 1.45rem;
+      color: #d81b60;
+    }
+
+    .next-btn {
+      display: none;
+      font-family: inherit;
+      font-size: 1.45rem;
+      padding: 12px 30px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #ff5c93, #9b5de5);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #753bbd, 0 10px 20px rgba(155, 93, 229, 0.35);
+      animation: bounceNext 1.2s infinite;
+    }
+
+    .next-btn.show {
+      display: inline-block;
+    }
+
+    @keyframes bounceNext {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* ================= 결과 화면 ================= */
+    .result-card {
+      background: #fff;
+      border: 5px solid #ffb3d1;
+      border-radius: 32px;
+      padding: 32px 20px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+    }
+
+    .result-crown {
+      font-size: 4.2rem;
+      margin-bottom: 6px;
+    }
+
+    .result-title {
+      font-size: 2.4rem;
+      color: #d81b60;
+      margin: 0 0 10px;
+    }
+
+    .result-score {
+      font-size: 1.6rem;
+      color: #6a1b9a;
+      margin-bottom: 20px;
+    }
+
+    .learned-words-title {
+      font-size: 1.25rem;
+      color: #8e6c9e;
+      margin-bottom: 12px;
+    }
+
+    .learned-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fff5f9;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+
+    .learned-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 2px solid #ffb3d1;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .learned-chip:hover {
+      transform: scale(1.06);
+      border-color: var(--pink-main);
+    }
+
+    .learned-chip img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .action-big-btn {
+      font-family: inherit;
+      font-size: 1.4rem;
+      padding: 14px 28px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      background: var(--pink-main);
+      box-shadow: 0 6px 0 var(--pink-dark);
+    }
+
+    .action-big-btn.secondary {
+      background: var(--purple-main);
+      box-shadow: 0 6px 0 var(--purple-dark);
+    }
+
+    /* 축하 꽃가루 캔버스 */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+  <div class="bg-decor" id="bg-decor"></div>
+
+  <div class="app-container">
+    <!-- ==================== 1. 메인 시즌 선택 화면 ==================== -->
+    <section id="home-screen" class="screen active">
+      <div class="hero-header">
+        <span class="hero-badge">✨ 우리 아이 한글 쑥쑥 프로젝트 ✨</span>
+        <h1 class="hero-title">💖 캐치! 티니핑 한글 놀이 💖</h1>
+        <p class="hero-subtitle">좋아하는 시즌을 고르고 티니핑 친구들의 이름을 맞춰보세요!</p>
+      </div>
+
+      <div class="settings-bar">
+        <div class="setting-group">
+          <span class="setting-label">🎯 문제 수:</span>
+          <button class="pill-btn active" onclick="setQuestionCount(10, this)">10문제</button>
+          <button class="pill-btn" onclick="setQuestionCount(20, this)">20문제</button>
+          <button class="pill-btn" onclick="setQuestionCount(999, this)">전체 다 풀기</button>
+        </div>
+        <div class="setting-group">
+          <span class="setting-label">🔊 한글 읽어주기:</span>
+          <button id="tts-toggle-btn" class="pill-btn active" onclick="toggleTTS()">하츄핑 목소리 켜짐 🔊</button>
+        </div>
+      </div>
+
+      <div class="season-grid">
+        <!-- 시즌 1 -->
+        <button class="season-btn season-1" onclick="startGame(1)">
+          <span class="season-tag">시즌 1</span>
+          <div class="thumb-wrap">
+            <img src="image/1기_캐치_티니핑/01_하츄핑.png" alt="하츄핑" />
+          </div>
+          <div class="season-name">1기 캐치! 티니핑</div>
+          <div class="season-count">큐브 티니핑 · 45마리</div>
+        </button>
+
+        <!-- 시즌 2 -->
+        <button class="season-btn season-2" onclick="startGame(2)">
+          <span class="season-tag">시즌 2</span>
+          <div class="thumb-wrap">
+            <img src="image/2기_반짝반짝_캐치_티니핑/01_다이아 하츄핑.png" alt="다이아 하츄핑" />
+          </div>
+          <div class="season-name">2기 반짝반짝 티니핑</div>
+          <div class="season-count">보석 티니핑 · 20마리</div>
+        </button>
+
+        <!-- 시즌 3 -->
+        <button class="season-btn season-3" onclick="startGame(3)">
+          <span class="season-tag">시즌 3</span>
+          <div class="thumb-wrap">
+            <img src="image/3기_알쏭달쏭_캐치_티니핑/01_플로라 하츄핑.png" alt="플로라 하츄핑" />
+          </div>
+          <div class="season-name">3기 알쏭달쏭 티니핑</div>
+          <div class="season-count">열쇠 티니핑 · 21마리</div>
+        </button>
+
+        <!-- 시즌 4 -->
+        <button class="season-btn season-4" onclick="startGame(4)">
+          <span class="season-tag">시즌 4</span>
+          <div class="thumb-wrap">
+            <img src="image/4기_새콤달콤_캐치_티니핑/01_베리 하츄핑.png" alt="베리 하츄핑" />
+          </div>
+          <div class="season-name">4기 새콤달콤 티니핑</div>
+          <div class="season-count">디저트 티니핑 · 22마리</div>
+        </button>
+
+        <!-- 시즌 5 -->
+        <button class="season-btn season-5" onclick="startGame(5)">
+          <span class="season-tag">시즌 5</span>
+          <div class="thumb-wrap">
+            <img src="image/5기_슈팅스타_캐치_티니핑/01_스타 하츄핑.png" alt="스타 하츄핑" />
+          </div>
+          <div class="season-name">5기 슈팅스타 티니핑</div>
+          <div class="season-count">스타 티니핑 · 24마리</div>
+        </button>
+
+        <!-- 시즌 6 -->
+        <button class="season-btn season-6" onclick="startGame(6)">
+          <span class="season-tag">시즌 6</span>
+          <div class="thumb-wrap">
+            <img src="image/6기_프린세스_캐치_티니핑_및_극장판/01_프린세스 하츄핑.png" alt="프린세스 하츄핑" />
+          </div>
+          <div class="season-name">6기 프린세스 티니핑</div>
+          <div class="season-count">프린세스 & 극장판 · 22마리</div>
+        </button>
+
+        <!-- 7번째: 종합 버튼 (1~6시즌 전체) -->
+        <button class="season-btn season-all" onclick="startGame('all')">
+          <div class="multi-thumbs">
+            <img src="image/1기_캐치_티니핑/01_하츄핑.png" alt="1기" />
+            <img src="image/2기_반짝반짝_캐치_티니핑/01_다이아 하츄핑.png" alt="2기" />
+            <img src="image/3기_알쏭달쏭_캐치_티니핑/01_플로라 하츄핑.png" alt="3기" />
+            <img src="image/4기_새콤달콤_캐치_티니핑/01_베리 하츄핑.png" alt="4기" />
+            <img src="image/5기_슈팅스타_캐치_티니핑/01_스타 하츄핑.png" alt="5기" />
+            <img src="image/6기_프린세스_캐치_티니핑_및_극장판/01_프린세스 하츄핑.png" alt="6기" />
+          </div>
+          <div>
+            <span class="season-tag">👑 시즌 1 ~ 6 전체 통합</span>
+            <div class="season-name" style="font-size: 1.75rem;">🌟 종합 한글 퀴즈 (1~6시즌 모두!)</div>
+            <div class="season-count" style="font-size: 1.1rem; color: #ad1457;">총 154마리 모든 시즌 티니핑이 한꺼번에 나와요!</div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== 2. 퀴즈 게임 화면 ==================== -->
+    <section id="quiz-screen" class="screen">
+      <div class="quiz-topbar">
+        <button class="nav-btn" onclick="goHome()">🏠 시즌 다시 고르기</button>
+        <div class="status-pills">
+          <span class="status-pill" id="mode-title-pill">1기 캐치! 티니핑</span>
+          <span class="status-pill" id="progress-pill">1 / 10</span>
+          <span class="status-pill" id="score-pill">💖 0</span>
+        </div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
+      <div class="quiz-card">
+        <div class="char-meta-badges">
+          <span class="meta-badge" id="char-season-badge">1기 캐치! 티니핑</span>
+          <span class="meta-badge" id="char-grade-badge">로열 티니핑</span>
+        </div>
+
+        <h2 class="question-prompt">이 티니핑의 이름은 무엇일까요?</h2>
+
+        <div class="image-stage">
+          <img id="quiz-image" src="" alt="티니핑 이미지" />
+        </div>
+
+        <div class="helper-bar">
+          <button class="helper-btn voice-btn" onclick="speakCurrentAnswer()">
+            🔊 이름 소리 먼저 들어보기
+          </button>
+          <button class="helper-btn" onclick="toggleHint()">
+            💡 마법 힌트 보기
+          </button>
+        </div>
+
+        <div class="hint-box" id="hint-box"></div>
+
+        <!-- 정답 맞혔을 때 한 글자씩 크게 보여주는 한글 학습 상자 -->
+        <div class="syllable-learn-box" id="syllable-learn-box">
+          <div class="syllable-blocks" id="syllable-blocks"></div>
+          <p class="syllable-desc" id="syllable-desc"></p>
+        </div>
+
+        <!-- 4개의 큰 객관식 버튼 -->
+        <div class="choices-grid" id="choices-grid"></div>
+
+        <div class="feedback-banner">
+          <div class="feedback-msg" id="feedback-msg"></div>
+          <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 친구 만나기 👉</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. 결과 축하 화면 ==================== -->
+    <section id="result-screen" class="screen">
+      <div class="result-card">
+        <div class="result-crown">👑🎉💖</div>
+        <h2 class="result-title">참 잘했어요! 한글 박사님!</h2>
+        <div class="result-score" id="result-score-text"></div>
+
+        <div class="learned-words-title">👇 오늘 맞힌 티니핑 이름을 눌러서 다시 읽어보세요!</div>
+        <div class="learned-grid" id="learned-grid"></div>
+
+        <div class="result-actions">
+          <button class="action-big-btn" onclick="restartSameMode()">🔄 한 번 더 하기!</button>
+          <button class="action-big-btn secondary" onclick="goHome()">🏠 다른 시즌 고르기</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // 1~6기 전체 154종 티니핑 데이터
+    const TEENIEPINGS = [{"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "01", "name": "하츄핑", "grade": "로열", "keyword": "사랑", "desc": "손거울 / 밝은 빛과 사랑의 에너지 방출", "img": "image/1기_캐치_티니핑/01_하츄핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "01", "name": "다이아 하츄핑", "grade": "로열", "keyword": "사랑 / 다이아몬드", "desc": "하프 / 다이아몬드 빛과 음표 마법 방출", "img": "image/2기_반짝반짝_캐치_티니핑/01_다이아 하츄핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "01", "name": "플로라 하츄핑", "grade": "로열", "keyword": "사랑", "desc": "향수병 / 향기로운 꽃향기와 사랑의 하트 마법 방출", "img": "image/3기_알쏭달쏭_캐치_티니핑/01_플로라 하츄핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "01", "name": "베리 하츄핑", "grade": "로열", "keyword": "딸기 타르트 / 사랑", "desc": "딸기 종(핸드벨) / 상큼한 딸기 향과 사랑의 에너지 발산", "img": "image/4기_새콤달콤_캐치_티니핑/01_베리 하츄핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "01", "name": "스타 하츄핑", "grade": "로열", "keyword": "사랑", "desc": "별빛 요술봉 / 별빛 에너지와 사랑의 파동 방출", "img": "image/5기_슈팅스타_캐치_티니핑/01_스타 하츄핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "01", "name": "프린세스 하츄핑", "grade": "6기 로열", "keyword": "사랑·프린세스", "desc": "왕관과 드레스 차림의 하츄핑 각성 형태", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/01_프린세스 하츄핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "02", "name": "바로핑", "grade": "로열", "keyword": "올바름", "desc": "마법 책 / 기호 모양 마법으로 바른 생활 유도", "img": "image/1기_캐치_티니핑/02_바로핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "02", "name": "조아핑", "grade": "로열", "keyword": "친절 / 에메랄드", "desc": "브러시 / 동물과 대화하고 친절의 에메랄드 마법 사용", "img": "image/2기_반짝반짝_캐치_티니핑/02_조아핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "02", "name": "꾸래핑", "grade": "로열", "keyword": "평화", "desc": "눈사람 인형 / 눈과 얼음을 소환해 다툼을 멈추고 평화 유지", "img": "image/3기_알쏭달쏭_캐치_티니핑/02_꾸래핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "02", "name": "샤샤핑", "grade": "로열", "keyword": "아이스크림 / 긍정", "desc": "아이스크림 콘 / 냉기 마법 및 동물들과 소통하는 긍정 마법", "img": "image/4기_새콤달콤_캐치_티니핑/02_샤샤핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "02", "name": "빛나핑", "grade": "로열", "keyword": "치유", "desc": "천칭 저울 / 상처와 마음을 치유하는 별빛 마법", "img": "image/5기_슈팅스타_캐치_티니핑/02_빛나핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "02", "name": "사뿐핑", "grade": "6기 로열", "keyword": "우아함", "desc": "우아한 몸놀림과 리본·발레풍 프린세스 마법", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/02_사뿐핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "03", "name": "아자핑", "grade": "로열", "keyword": "용기", "desc": "카메라 / 잠시 겁을 상실하게 만드는 용기 부여", "img": "image/1기_캐치_티니핑/03_아자핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "03", "name": "방글핑", "grade": "로열", "keyword": "웃음 / 루비", "desc": "폭죽 / 폭죽에서 깜짝 상자나 물건을 소환", "img": "image/2기_반짝반짝_캐치_티니핑/03_방글핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "03", "name": "나나핑", "grade": "로열", "keyword": "열정", "desc": "손거울(태양) / 뜨거운 열정 에너지와 반사 마법 구사", "img": "image/3기_알쏭달쏭_캐치_티니핑/03_나나핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "03", "name": "포실핑", "grade": "로열", "keyword": "솜사탕 / 순수", "desc": "솜사탕 항아리 / 푹신한 솜사탕 구름을 만들어 방어 및 부유", "img": "image/4기_새콤달콤_캐치_티니핑/03_포실핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "03", "name": "초롱핑", "grade": "로열", "keyword": "소망", "desc": "소망의 별 / 길을 밝히고 간절한 소망을 이루어주는 빛 방출", "img": "image/5기_슈팅스타_캐치_티니핑/03_초롱핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "03", "name": "아름핑", "grade": "6기 로열", "keyword": "고움", "desc": "요술봉으로 마법 원단을 발사해 사물을 감싸거나 활용", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/03_아름핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "04", "name": "차차핑", "grade": "로열", "keyword": "희망", "desc": "물뿌리개 / 식물을 가꾸고 희망과 행운 부여", "img": "image/1기_캐치_티니핑/04_차차핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "04", "name": "믿어핑", "grade": "로열", "keyword": "믿음 / 사파이어", "desc": "우산 / 우산으로 방어막을 치고 바람·비 마법 구사", "img": "image/2기_반짝반짝_캐치_티니핑/04_믿어핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "04", "name": "솔찌핑", "grade": "로열", "keyword": "솔직함", "desc": "구름 솜사탕 / 구름을 타고 비행하며 진실만 말하게 함", "img": "image/3기_알쏭달쏭_캐치_티니핑/04_솔찌핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "04", "name": "말랑핑", "grade": "로열", "keyword": "과일 젤리 / 발랄", "desc": "젤리 줄넘기 / 통통 튀는 탄력 젤리볼 생성 및 위치 추적", "img": "image/4기_새콤달콤_캐치_티니핑/04_말랑핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "04", "name": "빤짝핑", "grade": "로열", "keyword": "밝음", "desc": "솜인형 / 어두운 곳이나 우울한 분위기를 밝게 전환", "img": "image/5기_슈팅스타_캐치_티니핑/04_빤짝핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "04", "name": "뽀니핑", "grade": "6기 로열", "keyword": "당당함·포니", "desc": "포니(조랑말) 모티브의 활발한 프린세스 마법", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/04_뽀니핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "05", "name": "라라핑", "grade": "로열", "keyword": "즐거움", "desc": "마이크 / 노래와 소리로 대상을 즐겁게 만듦", "img": "image/1기_캐치_티니핑/05_라라핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "05", "name": "까르핑", "grade": "일반", "keyword": "간지럼 / 시트린", "desc": "깃털 부채 / 대상을 간지럽혀 웃게 만듦", "img": "image/2기_반짝반짝_캐치_티니핑/05_까르핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "05", "name": "행운핑", "grade": "레전드", "keyword": "행운", "desc": "마법봉 / 보라색 상자에서 깨어나 강력한 행운과 정화 부여", "img": "image/3기_알쏭달쏭_캐치_티니핑/05_행운핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "05", "name": "새콤핑", "grade": "레전드", "keyword": "레몬 타르트 / 상큼", "desc": "요술봉(시트러스) / 달콤핑과 합동 마법, 새콤한 광선 발사", "img": "image/4기_새콤달콤_캐치_티니핑/05_새콤핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "05", "name": "오로라핑", "grade": "레전드", "keyword": "약속", "desc": "오로라 활 / 밤하늘에 오로라를 수놓는 강력한 성좌 마법", "img": "image/5기_슈팅스타_캐치_티니핑/05_오로라핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "05", "name": "다이아나핑", "grade": "6기 레전드", "keyword": "빛(루미너스)", "desc": "이클립스핑과 자매 관계인 선역 레전드 티니핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/05_다이아나핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "06", "name": "해핑", "grade": "로열", "keyword": "행복", "desc": "비눗방울 총 / 비눗방울로 대상을 행복하게 만듦", "img": "image/1기_캐치_티니핑/06_해핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "06", "name": "아야핑", "grade": "일반", "keyword": "아픔 / 가넷", "desc": "반창고 / 엄살을 부리며 타인에게 아픔을 유발", "img": "image/2기_반짝반짝_캐치_티니핑/06_아야핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "06", "name": "빨리핑", "grade": "일반", "keyword": "조급함·재촉", "desc": "회중시계 / 모든 사람의 행동과 말을 초고속으로 재촉", "img": "image/3기_알쏭달쏭_캐치_티니핑/06_빨리핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "06", "name": "달콤핑", "grade": "레전드", "keyword": "생크림 케이크 / 달달", "desc": "요술봉(생크림) / 새콤핑과 합동 마법, 달콤한 크림 마법 구사", "img": "image/4기_새콤달콤_캐치_티니핑/06_달콤핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "06-1", "name": "왕자핑", "grade": "레전드", "keyword": "우수 (낭만)", "desc": "마법의 종이배·지팡이 / 나쁜 기억을 흘려보내고 별의 힘을 수호", "img": "image/5기_슈팅스타_캐치_티니핑/06-1_왕자핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "06-2", "name": "나그네핑", "grade": "레전드", "keyword": "우수 (낭만)", "desc": "마법의 종이배·지팡이 / 나쁜 기억을 흘려보내고 별의 힘을 수호", "img": "image/5기_슈팅스타_캐치_티니핑/06-2_나그네핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "06", "name": "이클립스핑", "grade": "6기 빌런", "keyword": "어둠(다크니스)", "desc": "다이아나핑과 대립하는 6기 메인 빌런 티니핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/06_이클립스핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "07", "name": "키키핑", "grade": "일반", "keyword": "장난", "desc": "막대사탕 / 대상을 장난꾸러기로 만듦", "img": "image/1기_캐치_티니핑/07_키키핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "07", "name": "소원핑", "grade": "일반", "keyword": "소원 / 스페인의 별", "desc": "요술봉 / 3가지 소원을(엉뚱한 방식으로) 들어줌", "img": "image/2기_반짝반짝_캐치_티니핑/07_소원핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "07", "name": "얌얌핑", "grade": "일반", "keyword": "식욕", "desc": "포크와 나이프 / 주변 사람들을 배고프게 만들고 음식을 먹임", "img": "image/3기_알쏭달쏭_캐치_티니핑/07_얌얌핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "07", "name": "캔디핑", "grade": "일반", "keyword": "사탕 / 칭찬", "desc": "사탕 바구니 / 사탕을 주며 칭찬해 다툼을 멈추게 함", "img": "image/4기_새콤달콤_캐치_티니핑/07_캔디핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "07", "name": "깡총핑", "grade": "일반", "keyword": "극복", "desc": "줄넘기(토끼귀) / 높은 장애물을 깡충 뛰어넘는 점프 마법", "img": "image/5기_슈팅스타_캐치_티니핑/07_깡총핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-01", "name": "뽀득핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-01_뽀득핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-02", "name": "쿨쿨핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-02_쿨쿨핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-03", "name": "슈슈핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-03_슈슈핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-04", "name": "차밍핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-04_차밍핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-05", "name": "깨굴핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-05_깨굴핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-06", "name": "젠틀핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-06_젠틀핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-07", "name": "큐핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-07_큐핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-08", "name": "나비핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-08_나비핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-09", "name": "스노우핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-09_스노우핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-10", "name": "실크핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-10_실크핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-11", "name": "샤를핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-11_샤를핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-12", "name": "트롯핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-12_트롯핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-13", "name": "이슬핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-13_이슬핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-14", "name": "롱롱핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-14_롱롱핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "07-15", "name": "야옹핑", "grade": "6기 일반", "keyword": "프린세스 테마", "desc": "6기 프린세스 캐치! 티니핑에 등장하는 일반 프린세스핑", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/07-15_야옹핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "08", "name": "아잉핑", "grade": "일반", "keyword": "애교", "desc": "리본봉 / 과도한 애교를 부리게 만듦", "img": "image/1기_캐치_티니핑/08_아잉핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "08", "name": "토닥핑", "grade": "일반", "keyword": "위로 / 비취(옥)", "desc": "애착 담요 / 슬픈 대상을 따뜻하게 위로하고 진정시킴", "img": "image/2기_반짝반짝_캐치_티니핑/08_토닥핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "08", "name": "뜨거핑", "grade": "일반", "keyword": "소방·뜨거움", "desc": "소화기 / 뜨거운 것을 모두 식히고 화재를 과잉 진압", "img": "image/3기_알쏭달쏭_캐치_티니핑/08_뜨거핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "08", "name": "머랭핑", "grade": "일반", "keyword": "머랭쿠키 / 장식", "desc": "핸드 거품기 / 단단한 머랭 거품을 쏴서 화려하게 장식하거나 이동", "img": "image/4기_새콤달콤_캐치_티니핑/08_머랭핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "08", "name": "훌라핑", "grade": "일반", "keyword": "활동", "desc": "훌라후프 / 훌라후프를 돌리며 대상을 쉴 새 없이 움직이게 함", "img": "image/5기_슈팅스타_캐치_티니핑/08_훌라핑.png"}, {"season": 6, "seasonTitle": "6기 프린세스 & 극장판", "code": "08", "name": "트러핑", "grade": "극장판 1기 빌런", "keyword": "절망·불신", "desc": "영화 《사랑의 하츄핑》 메인 빌런, 인간과의 우정을 불신", "img": "image/6기_프린세스_캐치_티니핑_및_극장판/08_트러핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "09", "name": "부끄핑", "grade": "일반", "keyword": "부끄러움", "desc": "당근 쿠션 / 극도로 부끄러워하게 만듦", "img": "image/1기_캐치_티니핑/09_부끄핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "09", "name": "쪼꼼핑", "grade": "일반", "keyword": "소심함 / 탄자나이트", "desc": "아코디언 / 대상이나 사물의 크기를 아주 작게 축소", "img": "image/2기_반짝반짝_캐치_티니핑/09_쪼꼼핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "09", "name": "삐뽀핑", "grade": "일반", "keyword": "의사·진료", "desc": "청진기 / 간호핑들과 함께 엉뚱한 병명을 진단하고 치료", "img": "image/3기_알쏭달쏭_캐치_티니핑/09_삐뽀핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "09", "name": "샌드핑", "grade": "일반", "keyword": "샌드쿠키 / 채움", "desc": "크림 주걱(스패출러) / 빈틈이나 구멍을 크림으로 꽉 채워버림", "img": "image/4기_새콤달콤_캐치_티니핑/09_샌드핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "09", "name": "나눔핑", "grade": "일반", "keyword": "나눔", "desc": "빛의 랜턴 / 자신의 빛과 물건을 주변에 아낌없이 나눠줌", "img": "image/5기_슈팅스타_캐치_티니핑/09_나눔핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "10", "name": "부투핑", "grade": "일반", "keyword": "승부욕", "desc": "깃발 / 사소한 일에도 승부욕을 불태우게 함", "img": "image/1기_캐치_티니핑/10_부투핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "10", "name": "싹싹핑", "grade": "일반", "keyword": "청소 / 산호", "desc": "빗자루 / 주변을 강제로 깨끗이 청소하게 만듦", "img": "image/2기_반짝반짝_캐치_티니핑/10_싹싹핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "10", "name": "힘내핑", "grade": "일반", "keyword": "응원", "desc": "치어리딩 수술 / 응원 댄스로 대상에게 한계 이상의 체력 부여", "img": "image/3기_알쏭달쏭_캐치_티니핑/10_힘내핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "10", "name": "또너핑", "grade": "일반", "keyword": "도넛 / 구멍", "desc": "도넛 링 / 마법의 링으로 벽이나 물체에 동그란 구멍을 뚫음", "img": "image/4기_새콤달콤_캐치_티니핑/10_또너핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "10", "name": "딩동핑", "grade": "일반", "keyword": "보냄(택배)", "desc": "택배 상자 / 원하는 물건을 어디든 신속하게 배달", "img": "image/5기_슈팅스타_캐치_티니핑/10_딩동핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "11", "name": "깜빡핑", "grade": "일반", "keyword": "건망증", "desc": "지우개 / 기억을 지우거나 깜빡하게 만듦", "img": "image/1기_캐치_티니핑/11_깜빡핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "11", "name": "맛나핑", "grade": "일반", "keyword": "요리 / 호박", "desc": "국자 / 요리를 맛있게 만들고 요리를 돕는 마법", "img": "image/2기_반짝반짝_캐치_티니핑/11_맛나핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "11", "name": "고쳐핑", "grade": "일반", "keyword": "수리", "desc": "렌치(스패너) / 고장 난 물건을 고치거나 멀쩡한 물건을 개조", "img": "image/3기_알쏭달쏭_캐치_티니핑/11_고쳐핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "11", "name": "와플핑", "grade": "일반", "keyword": "와플 / 납작함", "desc": "와플 메이커(심벌즈) / 입체적인 물건을 종이처럼 납작하게 누름", "img": "image/4기_새콤달콤_캐치_티니핑/11_와플핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "11", "name": "고고핑", "grade": "일반", "keyword": "쾌속", "desc": "별빛 보드 / 보드를 타고 하늘과 지상을 초고속으로 질주", "img": "image/5기_슈팅스타_캐치_티니핑/11_고고핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "12", "name": "띠용핑", "grade": "일반", "keyword": "상상력", "desc": "마술사 모자 / 상상한 환영을 실제처럼 보여줌", "img": "image/1기_캐치_티니핑/12_띠용핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "12", "name": "포근핑", "grade": "일반", "keyword": "포근함 / 진주", "desc": "뜨개바늘 / 무엇이든 털실 뜨개질 옷으로 감싸버림", "img": "image/2기_반짝반짝_캐치_티니핑/12_포근핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "12", "name": "아라핑", "grade": "일반", "keyword": "발명·탐구", "desc": "플라스크와 물약 / 다양한 마법 물약을 조합해 실험", "img": "image/3기_알쏭달쏭_캐치_티니핑/12_아라핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "12", "name": "롤리핑", "grade": "일반", "keyword": "롤리팝 / 회전", "desc": "롤리팝 바람개비 / 바람개비를 돌려 물체를 빙글빙글 회전시킴", "img": "image/4기_새콤달콤_캐치_티니핑/12_롤리핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "12", "name": "뿌쵸핑", "grade": "일반", "keyword": "전시", "desc": "스티커북 / 대상을 스티커처럼 벽이나 사물에 착 붙임", "img": "image/5기_슈팅스타_캐치_티니핑/12_뿌쵸핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "13", "name": "주르핑", "grade": "일반", "keyword": "눈물", "desc": "나뭇잎 우산 / 감정별 눈물 사탕 생성 및 울음 유도", "img": "image/1기_캐치_티니핑/13_주르핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "13", "name": "메모핑", "grade": "일반", "keyword": "기록 / 터키석", "desc": "수첩과 펜 / 수첩에 적은 내용이 실제로 일어나게 함", "img": "image/2기_반짝반짝_캐치_티니핑/13_메모핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "13", "name": "패션핑", "grade": "일반", "keyword": "디자인", "desc": "줄자와 마네킹 / 즉석에서 기상천외한 옷을 디자인해 입힘", "img": "image/3기_알쏭달쏭_캐치_티니핑/13_패션핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "13", "name": "마카핑", "grade": "일반", "keyword": "마카롱 / 색칠", "desc": "짤주머니 / 알록달록한 마카롱 크림으로 주변 색상을 바꿈", "img": "image/4기_새콤달콤_캐치_티니핑/13_마카핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "13", "name": "고마핑", "grade": "일반", "keyword": "튼튼함(힘)", "desc": "민들레 홀씨 / 작은 체구에서 엄청난 괴력과 바람을 일으킴", "img": "image/5기_슈팅스타_캐치_티니핑/13_고마핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "14", "name": "차나핑", "grade": "일반", "keyword": "귀찮음", "desc": "베개 / 모든 일을 귀찮아하고 나태하게 만듦", "img": "image/1기_캐치_티니핑/14_차나핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "14", "name": "공쥬핑", "grade": "일반", "keyword": "공주 / 알렉산드라이트", "desc": "마법봉 / 자신을 공주로 만들고 타인을 시종으로 부림", "img": "image/2기_반짝반짝_캐치_티니핑/14_공쥬핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "14", "name": "꼼딱핑", "grade": "일반", "keyword": "경찰·순찰", "desc": "호루라기와 수갑 / 규칙 위반자를 찾아내 움직이지 못하게 함", "img": "image/3기_알쏭달쏭_캐치_티니핑/14_꼼딱핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "14", "name": "핫케핑", "grade": "일반", "keyword": "핫케이크 / 쌓기", "desc": "프라이팬 / 물건들을 위로 차곡차곡 높이 쌓아 올림", "img": "image/4기_새콤달콤_캐치_티니핑/14_핫케핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "14", "name": "아롱핑", "grade": "일반", "keyword": "자매(언니)", "desc": "별 구슬 / 동생 다롱핑과 호흡을 맞춰 구슬 마법 구사", "img": "image/5기_슈팅스타_캐치_티니핑/14_아롱핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "15", "name": "따라핑", "grade": "일반", "keyword": "모방", "desc": "쌍안경 / 대상이 자신의 행동을 똑같이 따라 하게 함", "img": "image/1기_캐치_티니핑/15_따라핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "15", "name": "짝짝핑", "grade": "일반", "keyword": "짝수 / 아쿠아마린", "desc": "캐스터네츠 / 홀수로 있는 물건을 무조건 2개(짝수)로 복제", "img": "image/2기_반짝반짝_캐치_티니핑/15_짝짝핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "15", "name": "퐁당핑", "grade": "일반", "keyword": "수영·바다", "desc": "소라껍데기 / 인어 꼬리로 변신해 수중 헤엄 및 물방울 마법", "img": "image/3기_알쏭달쏭_캐치_티니핑/15_퐁당핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "15", "name": "커핑", "grade": "일반", "keyword": "컵케이크 / 쌍둥이 언니", "desc": "유모차 & 쪽쪽이 / 머핑과 함께 다니며 주변 사람을 아기로 만듦", "img": "image/4기_새콤달콤_캐치_티니핑/15_커핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "15", "name": "다롱핑", "grade": "일반", "keyword": "자매(동생)", "desc": "별 구슬 / 언니 아롱핑과 함께 다니며 협동 마법 사용", "img": "image/5기_슈팅스타_캐치_티니핑/15_다롱핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "16", "name": "나르핑", "grade": "일반", "keyword": "자아도취", "desc": "립스틱 / 자신과 외모를 과도하게 사랑하게 만듦", "img": "image/1기_캐치_티니핑/16_나르핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "16", "name": "주네핑", "grade": "일반", "keyword": "선물 / 페리도트", "desc": "선물상자 / 대상이 가장 원하는 맞춤형 선물 제공", "img": "image/2기_반짝반짝_캐치_티니핑/16_주네핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "16", "name": "파티핑", "grade": "일반", "keyword": "파티", "desc": "풍선 / 언제 어디서나 화려한 파티장으로 변모시킴", "img": "image/3기_알쏭달쏭_캐치_티니핑/16_파티핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "16", "name": "머핑", "grade": "일반", "keyword": "머핀 / 쌍둥이 동생", "desc": "유모차 & 쪽쪽이 / 커핑과 함께 울음소리로 정신을 쏙 빼놓음", "img": "image/4기_새콤달콤_캐치_티니핑/16_머핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "16", "name": "뽀송핑", "grade": "일반", "keyword": "뽀송함", "desc": "파우더 퍼프 / 젖거나 눅눅한 것을 순식간에 보송보송하게 말림", "img": "image/5기_슈팅스타_캐치_티니핑/16_뽀송핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "17", "name": "무셔핑", "grade": "일반", "keyword": "두려움", "desc": "손전등 / 대상을 겁에 질리게 하거나 공포 환영 생성", "img": "image/1기_캐치_티니핑/17_무셔핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "17", "name": "뚝딱핑", "grade": "일반", "keyword": "조각 / 자수정", "desc": "망치와 끌 / 조각상을 만들거나 조각상에 생명을 불어넣음", "img": "image/2기_반짝반짝_캐치_티니핑/17_뚝딱핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "17", "name": "꾸며핑", "grade": "일반", "keyword": "헤어·미용", "desc": "가위와 빗 / 사람들의 머리 모양을 화려하고 엉뚱하게 손질", "img": "image/3기_알쏭달쏭_캐치_티니핑/17_꾸며핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "17", "name": "요거핑", "grade": "일반", "keyword": "요거트 / 편안함·숙면", "desc": "요거트 스푼 / 요거트 양들을 소환해 대상을 편안하게 재움", "img": "image/4기_새콤달콤_캐치_티니핑/17_요거핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "17", "name": "유리핑", "grade": "일반", "keyword": "투명", "desc": "유리잔·프리즘 / 사물이나 자신의 모습을 투명하게 만듦", "img": "image/5기_슈팅스타_캐치_티니핑/17_유리핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "18", "name": "투투핑", "grade": "일반", "keyword": "질투", "desc": "부채 / 대상을 질투심에 사로잡히게 만듦", "img": "image/1기_캐치_티니핑/18_투투핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "18", "name": "발레핑", "grade": "일반", "keyword": "발레 / 로즈쿼츠", "desc": "오르골 / 대상이 백조의 호수 등 발레 동작을 추게 함", "img": "image/2기_반짝반짝_캐치_티니핑/18_발레핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "18", "name": "삐짐핑", "grade": "일반", "keyword": "토라짐", "desc": "막대사탕 / 사소한 일에 토라지게 만들고 등을 돌리게 함", "img": "image/3기_알쏭달쏭_캐치_티니핑/18_삐짐핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "18", "name": "눈꽃핑", "grade": "일반", "keyword": "눈꽃빙수 / 눈보라", "desc": "빙수기 / 한여름에도 시원한 눈꽃과 빙수를 내리게 함", "img": "image/4기_새콤달콤_캐치_티니핑/18_눈꽃핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "18", "name": "함께핑", "grade": "일반", "keyword": "협동", "desc": "지휘봉 / 흩어진 힘을 하나로 모아 협동하게 만듦", "img": "image/5기_슈팅스타_캐치_티니핑/18_함께핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "19", "name": "차캐핑", "grade": "일반", "keyword": "배려", "desc": "도장 / 착한 일에 도장을 찍어주며 배려심 유도", "img": "image/1기_캐치_티니핑/19_차캐핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "19", "name": "원더핑", "grade": "일반", "keyword": "영웅 / 라피스라줄리", "desc": "부메랑 / 정의의 히어로처럼 비행 및 부메랑 공격", "img": "image/2기_반짝반짝_캐치_티니핑/19_원더핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "19", "name": "아아핑", "grade": "일반", "keyword": "성악·고음", "desc": "음표 지휘봉 / 엄청난 성량과 고음으로 유리창을 깨거나 공격", "img": "image/3기_알쏭달쏭_캐치_티니핑/19_아아핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "19", "name": "푸딩핑", "grade": "일반", "keyword": "푸딩 / 흔들림·춤", "desc": "푸딩 접시 / 신나는 음악과 함께 모두가 푸딩처럼 몸을 흔들게 함", "img": "image/4기_새콤달콤_캐치_티니핑/19_푸딩핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "19", "name": "댄스핑", "grade": "일반", "keyword": "경쾌함", "desc": "마법 리코더 / 리코더 연주로 주변 대상을 신나게 춤추게 함", "img": "image/5기_슈팅스타_캐치_티니핑/19_댄스핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "20", "name": "떠벌핑", "grade": "일반", "keyword": "수다", "desc": "확성기 / 속마음이나 비밀을 쉬지 않고 말하게 함", "img": "image/1기_캐치_티니핑/20_떠벌핑.png"}, {"season": 2, "seasonTitle": "2기 반짝반짝 캐치! 티니핑", "code": "20", "name": "가면핑", "grade": "빌런", "keyword": "위장(다해핑)", "desc": "가면과 지팡이 / 어둠의 마법 및 보석티니핑 납치", "img": "image/2기_반짝반짝_캐치_티니핑/20_가면핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "20", "name": "빙글핑", "grade": "일반", "keyword": "피겨스케이트", "desc": "회전 팽이 / 바닥을 빙판으로 만들고 빙글빙글 돌게 함", "img": "image/3기_알쏭달쏭_캐치_티니핑/20_빙글핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "20", "name": "멜로핑", "grade": "일반", "keyword": "마시멜로 / 폭신함", "desc": "마시멜로 꼬치 / 딱딱한 사물을 마시멜로처럼 푹신하게 만듦", "img": "image/4기_새콤달콤_캐치_티니핑/20_멜로핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "20", "name": "여우핑", "grade": "일반", "keyword": "놀이", "desc": "마법 모래시계 / 분신술을 사용해 여러 명으로 복제하며 장난침", "img": "image/5기_슈팅스타_캐치_티니핑/20_여우핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "21", "name": "다조핑", "grade": "일반", "keyword": "욕심", "desc": "바구니 / 모든 것을 혼자 독차지하려는 욕심 유발", "img": "image/1기_캐치_티니핑/21_다조핑.png"}, {"season": 3, "seasonTitle": "3기 알쏭달쏭 캐치! 티니핑", "code": "21", "name": "다해핑", "grade": "빌런", "keyword": "헌신", "desc": "마법 우산 / 제니를 향한 충성심으로 강력한 번개·어둠 마법 사용", "img": "image/3기_알쏭달쏭_캐치_티니핑/21_다해핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "21", "name": "쪼꼬핑", "grade": "일반", "keyword": "초콜릿 / 친목", "desc": "초콜릿 모자 / 초콜릿을 나눠주며 사이가 나쁜 사람들을 화해시킴", "img": "image/4기_새콤달콤_캐치_티니핑/21_쪼꼬핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "21", "name": "루루핑", "grade": "일반", "keyword": "재능", "desc": "스탠드 마이크 / 노래로 별의 에너지를 증폭시키고 감동을 줌", "img": "image/5기_슈팅스타_캐치_티니핑/21_루루핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "22", "name": "화나핑", "grade": "일반", "keyword": "분노", "desc": "부채(화염) / 화를 돋우고 몸에서 열기가 나게 함", "img": "image/1기_캐치_티니핑/22_화나핑.png"}, {"season": 4, "seasonTitle": "4기 새콤달콤 캐치! 티니핑", "code": "22", "name": "뿌뿌핑", "grade": "빌런", "keyword": "풍선껌 / 장난·독점", "desc": "풍선껌 빨대 / 매직슈가볼의 힘을 흡수해 거대한 풍선껌 공격 구사", "img": "image/4기_새콤달콤_캐치_티니핑/22_뿌뿌핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "22", "name": "몰래핑", "grade": "일반", "keyword": "빼앗음", "desc": "마법 보자기 / 사물이나 나쁜 마음을 몰래 훔쳐 담아둠", "img": "image/5기_슈팅스타_캐치_티니핑/22_몰래핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "23", "name": "시러핑", "grade": "일반", "keyword": "거부", "desc": "X자 팻말 / 모든 말에 반항하고 거절하게 만듦", "img": "image/1기_캐치_티니핑/23_시러핑.png"}, {"season": 5, "seasonTitle": "5기 슈팅스타 캐치! 티니핑", "code": "23", "name": "뽀뽀핑", "grade": "일반", "keyword": "순정", "desc": "하트 거울 / 뽀뽀 마법으로 대상에게 애정과 순정을 전함", "img": "image/5기_슈팅스타_캐치_티니핑/23_뽀뽀핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "24", "name": "바네핑", "grade": "일반", "keyword": "반함", "desc": "하트 활과 화살 / 처음 본 대상에게 반하게 만듦", "img": "image/1기_캐치_티니핑/24_바네핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "25", "name": "덜덜핑", "grade": "일반", "keyword": "추위", "desc": "막대 아이스크림 / 주변을 얼리고 추위에 떨게 함", "img": "image/1기_캐치_티니핑/25_덜덜핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "26", "name": "그림핑", "grade": "일반", "keyword": "예술", "desc": "물감과 붓 / 그린 그림을 실체화시킴", "img": "image/1기_캐치_티니핑/26_그림핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "27", "name": "무거핑", "grade": "일반", "keyword": "무거움", "desc": "아령 / 물건을 들 수 없게 엄청나게 무겁게 만듦", "img": "image/1기_캐치_티니핑/27_무거핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "28", "name": "꺼꿀핑", "grade": "일반", "keyword": "거꾸로", "desc": "자석 / 물체나 행동을 위아래·반대로 뒤집음", "img": "image/1기_캐치_티니핑/28_꺼꿀핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "29", "name": "씽씽핑", "grade": "일반", "keyword": "스피드", "desc": "킥보드 / 대상의 속도를 엄청나게 빠르게 만듦", "img": "image/1기_캐치_티니핑/29_씽씽핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "30", "name": "베베핑", "grade": "일반", "keyword": "동심(아기)", "desc": "젖병 / 대상을 아기로 변하게 만듦", "img": "image/1기_캐치_티니핑/30_베베핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "31", "name": "코자핑", "grade": "일반", "keyword": "수면·꿈", "desc": "청소기(꿈) / 대상을 재우고 꿈속을 들여다봄", "img": "image/1기_캐치_티니핑/31_코자핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "32", "name": "딱풀핑", "grade": "일반", "keyword": "단결·접착", "desc": "딱풀 / 싸우는 대상이나 물체를 딱 붙여버림", "img": "image/1기_캐치_티니핑/32_딱풀핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "33", "name": "모야핑", "grade": "일반", "keyword": "호기심", "desc": "돋보기 / 물체의 크기를 키우고 호기심 유발", "img": "image/1기_캐치_티니핑/33_모야핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "34", "name": "또까핑", "grade": "일반", "keyword": "변신", "desc": "가면 / 다른 사람이나 사물의 모습으로 똑같이 변신", "img": "image/1기_캐치_티니핑/34_또까핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "35", "name": "플라핑", "grade": "일반", "keyword": "꽃", "desc": "장미꽃 / 식물을 조종하거나 대상을 꽃으로 만듦", "img": "image/1기_캐치_티니핑/35_플라핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "36", "name": "토이핑", "grade": "일반", "keyword": "장난감", "desc": "요요 / 대상이나 사물을 장난감으로 변화시킴", "img": "image/1기_캐치_티니핑/36_토이핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "37", "name": "노라핑", "grade": "일반", "keyword": "놀이(형)", "desc": "게임기 / 일이나 공부를 멈추고 놀게 만듦", "img": "image/1기_캐치_티니핑/37_노라핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "38", "name": "노리핑", "grade": "일반", "keyword": "놀이(동생)", "desc": "딸랑이 / 노라핑과 함께 따라다니며 놀이를 보조", "img": "image/1기_캐치_티니핑/38_노리핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "39", "name": "아휴핑", "grade": "일반", "keyword": "한숨", "desc": "나팔 / 나팔 소리를 들으면 한숨을 쉬며 좌절하게 함", "img": "image/1기_캐치_티니핑/39_아휴핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "40", "name": "똑똑핑", "grade": "일반", "keyword": "학구열", "desc": "큰 연필 / 거대한 연필과 책으로 공부에 집중시킴", "img": "image/1기_캐치_티니핑/40_똑똑핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "41", "name": "꽁꽁핑", "grade": "일반", "keyword": "냉동", "desc": "아이스크림 콘 / 대상이나 공간을 얼려버림", "img": "image/1기_캐치_티니핑/41_꽁꽁핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "42", "name": "찌릿핑", "grade": "일반", "keyword": "전기", "desc": "번개 지팡이 / 전기를 방출하고 감전시킴", "img": "image/1기_캐치_티니핑/42_찌릿핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "43", "name": "홀로핑", "grade": "일반", "keyword": "고독", "desc": "낚싯대 / 방어막을 치고 혼자 있게 만듦", "img": "image/1기_캐치_티니핑/43_홀로핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "44-1", "name": "악동핑", "grade": "빌런", "keyword": "흑화 / 이기심", "desc": "번개 풍선껌(악동핑) / 꽃가루 및 촉수 제어(앙대핑)", "img": "image/1기_캐치_티니핑/44-1_악동핑.png"}, {"season": 1, "seasonTitle": "1기 캐치! 티니핑", "code": "44-2", "name": "앙대핑", "grade": "빌런", "keyword": "흑화 / 이기심", "desc": "번개 풍선껌(악동핑) / 꽃가루 및 촉수 제어(앙대핑)", "img": "image/1기_캐치_티니핑/44-2_앙대핑.png"}];
+
+    let selectedLimit = 10;
+    let ttsEnabled = true;
+    let currentSeasonMode = 'all';
+    let pool = [];
+    let questions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let answeredCurrent = false;
+    let learnedList = [];
+
+    // 배경 하트/별 장식 생성
+    function initDecor() {
+      const decor = document.getElementById('bg-decor');
+      const icons = ['💖', '⭐', '🌸', '✨', '🎀', '💎', '👑'];
+      for (let i = 0; i < 18; i++) {
+        const span = document.createElement('span');
+        span.className = 'floating-icon';
+        span.textContent = icons[i % icons.length];
+        span.style.left = (Math.random() * 96) + 'vw';
+        span.style.animationDuration = (9 + Math.random() * 8) + 's';
+        span.style.animationDelay = (-Math.random() * 12) + 's';
+        decor.appendChild(span);
+      }
+    }
+    initDecor();
+
+    // 효과음 합성기 (Web Audio API - 외부 오디오 파일 불필요)
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.5]; // 도-미-솔-높은도
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.22, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.28);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.28);
+          });
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.linearRampToValueAtTime(190, now + 0.25);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.28);
+        } else if (type === 'fanfare') {
+          const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            gain.gain.setValueAtTime(0.22, now + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.35);
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 귀여운 하츄핑 톤 음성 재생기 (고음역 Neural TTS MP3 우선 재생 + Web Speech 폴백)
+    let currentAudio = null;
+
+    function stopCurrentVoice() {
+      if (currentAudio) {
+        try {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        } catch (e) {}
+        currentAudio = null;
+      }
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    }
+
+    function fallbackSpeak(text) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ko-KR';
+        utter.rate = 1.05;
+        utter.pitch = 1.65; // 귀여운 고음역
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    function playVoiceFile(relPath, fallbackText, force = false) {
+      if (!ttsEnabled && !force) return;
+      stopCurrentVoice();
+      try {
+        const audio = new Audio(relPath);
+        currentAudio = audio;
+        audio.onerror = () => fallbackSpeak(fallbackText);
+        audio.play().catch(() => fallbackSpeak(fallbackText));
+      } catch (e) {
+        fallbackSpeak(fallbackText);
+      }
+    }
+
+    function speakName(name, force = false) {
+      playVoiceFile(`audio/names/${encodeURIComponent(name)}.mp3`, name, force);
+    }
+
+    function speakCorrect(name, force = false) {
+      playVoiceFile(`audio/correct/${encodeURIComponent(name)}.mp3`, `${name} 정답이에요`, force);
+    }
+
+    function speakChar(ch, force = false) {
+      playVoiceFile(`audio/chars/${encodeURIComponent(ch)}.mp3`, ch, force);
+    }
+
+    function speakHint(name, keyword, force = false) {
+      playVoiceFile(`audio/hints/${encodeURIComponent(name)}.mp3`, `힌트! ${keyword}의 티니핑이에요.`, force);
+    }
+
+    function speakText(text, force = false) {
+      if (!ttsEnabled && !force) return;
+      stopCurrentVoice();
+      fallbackSpeak(text);
+    }
+
+    function setQuestionCount(count, btnEl) {
+      selectedLimit = count;
+      document.querySelectorAll('.settings-bar .setting-group:first-child .pill-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+
+    function toggleTTS() {
+      ttsEnabled = !ttsEnabled;
+      const btn = document.getElementById('tts-toggle-btn');
+      if (ttsEnabled) {
+        btn.classList.add('active');
+        btn.textContent = '하츄핑 목소리 켜짐 🔊';
+        playVoiceFile('audio/common/tts_on.mp3', '하츄핑 목소리가 켜졌어요, 츄!', true);
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '꺼짐 🔇';
+        stopCurrentVoice();
+      }
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startGame(seasonMode) {
+      currentSeasonMode = seasonMode;
+      if (seasonMode === 'all') {
+        pool = [...TEENIEPINGS];
+        document.getElementById('mode-title-pill').textContent = '🌟 종합 (1~6시즌)';
+      } else {
+        pool = TEENIEPINGS.filter(item => item.season === seasonMode);
+        document.getElementById('mode-title-pill').textContent = pool[0]?.seasonTitle || `${seasonMode}기`;
+      }
+
+      const shuffled = shuffle(pool);
+      const count = Math.min(selectedLimit, shuffled.length);
+      questions = shuffled.slice(0, count);
+      currentIndex = 0;
+      score = 0;
+      learnedList = [];
+
+      showScreen('quiz-screen');
+      renderQuestion();
+    }
+
+    function restartSameMode() {
+      startGame(currentSeasonMode);
+    }
+
+    function goHome() {
+      stopCurrentVoice();
+      showScreen('home-screen');
+    }
+
+    function renderQuestion() {
+      answeredCurrent = false;
+      const q = questions[currentIndex];
+
+      document.getElementById('progress-pill').textContent = `${currentIndex + 1} / ${questions.length}`;
+      document.getElementById('score-pill').textContent = `💖 ${score}`;
+      const pct = ((currentIndex) / questions.length) * 100;
+      document.getElementById('progress-fill').style.width = `${pct}%`;
+
+      document.getElementById('char-season-badge').textContent = q.seasonTitle;
+      document.getElementById('char-grade-badge').textContent = `등급: ${q.grade}`;
+
+      const imgEl = document.getElementById('quiz-image');
+      imgEl.src = q.img;
+      imgEl.alt = q.name;
+
+      // 힌트 및 학습 상자 초기화
+      const hintBox = document.getElementById('hint-box');
+      hintBox.classList.remove('show');
+      hintBox.innerHTML = `<strong>✨ 상징 키워드:</strong> ${q.keyword} <br/><strong>🪄 마법 특징:</strong> ${q.desc}`;
+
+      const learnBox = document.getElementById('syllable-learn-box');
+      learnBox.classList.remove('show');
+
+      document.getElementById('feedback-msg').textContent = '아래 4개의 한글 버튼 중에서 알맞은 이름을 골라보세요!';
+      document.getElementById('next-btn').classList.remove('show');
+
+      // 오답 보기 3개 선정 (같은 시즌 우선, 이름 중복 제외)
+      const otherCandidates = pool.filter(item => item.name !== q.name);
+      const uniqueNamesMap = new Map();
+      shuffle(otherCandidates).forEach(item => {
+        if (!uniqueNamesMap.has(item.name)) {
+          uniqueNamesMap.set(item.name, item);
+        }
+      });
+      const distractors = Array.from(uniqueNamesMap.values()).slice(0, 3);
+      const options = shuffle([q, ...distractors]);
+
+      const grid = document.getElementById('choices-grid');
+      grid.innerHTML = '';
+
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `
+          <span class="choice-num">${idx + 1}</span>
+          <span class="choice-text">${opt.name}</span>
+          <span class="choice-speak" title="글자 소리 듣기" onclick="event.stopPropagation(); speakName('${opt.name}', true);">🔊</span>
+        `;
+        btn.onclick = () => handleChoice(btn, opt, q);
+        grid.appendChild(btn);
+      });
+    }
+
+    function speakCurrentAnswer() {
+      const q = questions[currentIndex];
+      speakName(q.name, true);
+    }
+
+    function toggleHint() {
+      const hintBox = document.getElementById('hint-box');
+      hintBox.classList.toggle('show');
+      const q = questions[currentIndex];
+      if (hintBox.classList.contains('show')) {
+        speakHint(q.name, q.keyword, true);
+      } else {
+        stopCurrentVoice();
+      }
+    }
+
+    function handleChoice(btnEl, selectedOpt, correctOpt) {
+      if (answeredCurrent) {
+        // 이미 맞힌 뒤에도 버튼을 누르면 귀여운 하츄핑 톤으로 글자를 읽어줌
+        speakName(selectedOpt.name, true);
+        return;
+      }
+
+      if (selectedOpt.name === correctOpt.name) {
+        answeredCurrent = true;
+        score++;
+        learnedList.push(correctOpt);
+        btnEl.classList.add('correct');
+        document.getElementById('score-pill').textContent = `💖 ${score}`;
+        document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+
+        playSound('correct');
+        fireConfetti(35);
+        speakCorrect(correctOpt.name);
+
+        document.getElementById('feedback-msg').innerHTML = `🎉 <strong>${correctOpt.name} 정답이에요!</strong>`;
+        document.getElementById('next-btn').classList.add('show');
+
+        // 한글 음절 블록 표시 (공백 제외한 글자 하나씩 큼직하게 표시)
+        const blocksWrap = document.getElementById('syllable-blocks');
+        blocksWrap.innerHTML = '';
+        Array.from(correctOpt.name).forEach(ch => {
+          if (ch === ' ') {
+            const sp = document.createElement('div');
+            sp.style.width = '16px';
+            blocksWrap.appendChild(sp);
+          } else {
+            const b = document.createElement('div');
+            b.className = 'syllable-block';
+            b.textContent = ch;
+            b.style.cursor = 'pointer';
+            b.onclick = () => speakChar(ch, true);
+            blocksWrap.appendChild(b);
+          }
+        });
+        document.getElementById('syllable-desc').innerHTML =
+          `💡 <strong>${correctOpt.name}</strong> (${correctOpt.keyword}) — ${correctOpt.desc}<br/><small>글자 네모 칸을 누르면 한 글자씩 귀여운 소리로 들을 수 있어요!</small>`;
+        document.getElementById('syllable-learn-box').classList.add('show');
+      } else {
+        btnEl.classList.add('wrong');
+        btnEl.disabled = true;
+        speakName(selectedOpt.name);
+        document.getElementById('feedback-msg').innerHTML =
+          `<strong>${selectedOpt.name}</strong>`;
+      }
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex >= questions.length) {
+        showResults();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function showResults() {
+      showScreen('result-screen');
+      playSound('fanfare');
+      fireConfetti(90);
+      playVoiceFile('audio/common/finish.mp3', '우와! 문제를 모두 풀었어요! 정말 잘했어요, 츄!');
+
+      document.getElementById('result-score-text').innerHTML =
+        `총 <strong>${questions.length}</strong>명의 티니핑 친구 이름을 모두 배웠어요! 💖`;
+
+      const grid = document.getElementById('learned-grid');
+      grid.innerHTML = '';
+      learnedList.forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'learned-chip';
+        chip.innerHTML = `<img src="${item.img}" alt="${item.name}" /> <span>${item.name} 🔊</span>`;
+        chip.onclick = () => speakName(item.name, true);
+        grid.appendChild(chip);
+      });
+    }
+
+    // 간단한 꽃가루(Confetti) 파티클 효과
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function fireConfetti(count = 40) {
+      const colors = ['#ff5c93', '#ffca3a', '#00bbf9', '#9b5de5', '#2ec4b6', '#ff9f1c'];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: window.innerWidth / 2 + (Math.random() - 0.5) * 180,
+          y: window.innerHeight * 0.45,
+          vx: (Math.random() - 0.5) * 14,
+          vy: -Math.random() * 12 - 4,
+          size: 8 + Math.random() * 8,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rot: Math.random() * 360,
+          vrot: (Math.random() - 0.5) * 12,
+          life: 80 + Math.random() * 30
+        });
+      }
+      if (particles.length === count) {
+        requestAnimationFrame(updateConfetti);
+      }
+    }
+
+    function updateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35;
+        p.rot += p.vrot;
+        p.life -= 1;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        ctx.restore();
+      });
+      particles = particles.filter(p => p.life > 0);
+      if (particles.length > 0) {
+        requestAnimationFrame(updateConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>
