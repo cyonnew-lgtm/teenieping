@@ -397,10 +397,15 @@
       transition: all 0.25s ease;
     }
 
-    /* 2단계 글자 맞추기 모드일 때: 그림 영역을 작게 줄여서 글자 빈칸을 3배 크게 보여줌 */
+    /* 2단계 글자 맞추기 모드일 때: 남은 상단 공간을 꽉 채워 그림을 20% 이상 더 크게 표시 */
     .image-stage.puzzle-mode {
-      flex: 0 1 20dvh;
-      min-height: 75px;
+      flex: 1 1 26dvh;
+      min-height: 110px;
+    }
+
+    .image-stage.puzzle-mode img {
+      max-width: 98%;
+      max-height: 98%;
     }
 
     .image-stage img {
@@ -581,11 +586,12 @@
       min-height: 62px;
     }
 
-    /* 큰 한글 낱글자 카드 버튼 (2단계 퍼즐용) */
+    /* 큰 한글 낱글자 카드 버튼 (2단계 퍼즐용 — 후보 글자 크기 확대!) */
     .syllable-card-btn {
       font-family: inherit;
-      font-size: clamp(2rem, 7.5vw, 2.8rem);
-      padding: clamp(10px, 1.8vh, 16px) 0;
+      font-size: clamp(2.6rem, 9.2vw, 3.6rem);
+      line-height: 1;
+      padding: clamp(8px, 1.5vh, 14px) 0;
       border-radius: 20px;
       border: 3.5px solid #c77dff;
       background: linear-gradient(180deg, #ffffff 0%, #f8f0ff 100%);
@@ -596,7 +602,7 @@
       justify-content: center;
       box-shadow: 0 6px 0 #9d4edd, 0 8px 14px rgba(157, 78, 221, 0.16);
       transition: transform 0.1s ease, background 0.15s, border-color 0.15s;
-      min-height: 64px;
+      min-height: 68px;
     }
 
     .syllable-card-btn:active:not(:disabled) {
