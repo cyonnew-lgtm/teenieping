@@ -380,13 +380,20 @@
       position: relative;
       width: 100%;
       flex: 1;
-      min-height: 120px;
+      min-height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: radial-gradient(circle, #fff0f7 0%, #ffffff 75%);
       border-radius: 16px;
       overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    /* 2단계 글자 맞추기 모드일 때: 그림 영역을 작게 줄여서 글자 빈칸을 3배 크게 보여줌 */
+    .image-stage.puzzle-mode {
+      flex: 0 1 20dvh;
+      min-height: 75px;
     }
 
     .image-stage img {
@@ -396,11 +403,6 @@
       filter: drop-shadow(0 6px 14px rgba(216, 27, 96, 0.2));
       animation: gentleBounce 3s ease-in-out infinite;
       transition: transform 0.25s ease;
-    }
-
-    .image-stage.puzzle-mode img {
-      max-height: 74%;
-      margin-bottom: 54px;
     }
 
     @keyframes gentleBounce {
@@ -429,20 +431,16 @@
       display: block;
     }
 
-    /* 2단계 한글 글자 맞추기 슬롯 바 (사진 하단에 표시) */
+    /* 2단계 한글 글자 맞추기 슬롯 바 (큼직한 초대형 글자 카드 영역!) */
     .syllable-learn-box {
       display: none;
-      position: absolute;
-      bottom: 6px;
-      left: 6px;
-      right: 6px;
-      padding: 8px 10px;
-      background: rgba(255, 245, 250, 0.96);
-      border: 3px solid #ff5c93;
-      border-radius: 18px;
-      z-index: 4;
+      padding: 12px 8px;
+      background: linear-gradient(180deg, #fff5fa 0%, #ffe8f3 100%);
+      border: 3.5px solid #ff5c93;
+      border-radius: 22px;
       text-align: center;
-      box-shadow: 0 6px 16px rgba(255, 92, 147, 0.22);
+      box-shadow: 0 6px 18px rgba(255, 92, 147, 0.22);
+      flex-shrink: 0;
     }
 
     .syllable-learn-box.show {
@@ -451,7 +449,7 @@
     }
 
     .syllable-learn-box.completed {
-      background: rgba(216, 243, 220, 0.96);
+      background: linear-gradient(180deg, #e8fcef 0%, #d8f3dc 100%);
       border-color: #2ec4b6;
     }
 
@@ -464,23 +462,40 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 10px;
+      flex-wrap: nowrap;
     }
 
-    /* 글자 슬롯 칸 (빈칸 / 현재 맞출 칸 / 채워진 칸 / 고정된 '핑' 칸) */
+    /* 초대형 글자 슬롯 칸 (기본 2~3글자 기준 기존 대비 약 3배 확대!) */
     .syllable-slot {
-      width: clamp(50px, 13vw, 66px);
-      height: clamp(50px, 13vw, 66px);
+      width: clamp(96px, 27vw, 150px);
+      height: clamp(96px, 27vw, 150px);
       background: #fff;
-      border: 3px dashed #ffb3d1;
-      border-radius: 14px;
+      border: 4px dashed #ffb3d1;
+      border-radius: 22px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(1.65rem, 5vw, 2.2rem);
-      color: #ccc;
+      font-size: clamp(3.8rem, 12vw, 5.6rem);
+      color: #d0b8c8;
       transition: all 0.2s ease;
+      flex-shrink: 1;
+    }
+
+    /* 4~5글자 이름일 때 한 줄에 꽉 차도록 대형 크기 유지 */
+    .syllable-blocks.len-medium .syllable-slot {
+      width: clamp(66px, 18vw, 110px);
+      height: clamp(80px, 21vw, 122px);
+      font-size: clamp(2.7rem, 8.2vw, 4.2rem);
+      border-radius: 18px;
+    }
+
+    /* 6글자 이상(예: 프린세스 하츄핑)일 때 한 줄 맞춤 */
+    .syllable-blocks.len-long .syllable-slot {
+      width: clamp(48px, 13vw, 86px);
+      height: clamp(68px, 17.5vw, 100px);
+      font-size: clamp(2.1rem, 6.2vw, 3.3rem);
+      border-radius: 14px;
     }
 
     /* 지금 맞춰야 하는 타겟 빈칸 */
@@ -920,15 +935,16 @@
       </div>
 
       <div class="quiz-card">
-        <!-- 제일 위: 순수 캐릭터 사진 영역 -->
+        <!-- 제일 위: 순수 캐릭터 사진 영역 (2단계 글자 퍼즐 시 작게 축소됨) -->
         <div class="image-stage" id="image-stage">
           <img id="quiz-image" src="" alt="티니핑 이미지" />
 
           <div class="hint-box" id="hint-box"></div>
+        </div>
 
-          <div class="syllable-learn-box" id="syllable-learn-box">
-            <div class="syllable-blocks" id="syllable-blocks"></div>
-          </div>
+        <!-- 중간: 2단계 초대형 한글 빈칸 슬롯 영역 (기존 대비 3배 확대한 큼직한 글자 칸!) -->
+        <div class="syllable-learn-box" id="syllable-learn-box">
+          <div class="syllable-blocks" id="syllable-blocks"></div>
         </div>
 
         <!-- 바로 아래: 1단계(4개 객관식 버튼) -> 2단계(6개 한글 음절 카드) -->
@@ -1353,10 +1369,18 @@
       const blocksWrap = document.getElementById('syllable-blocks');
       blocksWrap.innerHTML = '';
 
+      const nonSpaceCount = puzzleSlots.filter(s => !s.isSpace).length;
+      blocksWrap.classList.remove('len-medium', 'len-long');
+      if (nonSpaceCount >= 6) {
+        blocksWrap.classList.add('len-long');
+      } else if (nonSpaceCount >= 4) {
+        blocksWrap.classList.add('len-medium');
+      }
+
       puzzleSlots.forEach((slot, idx) => {
         if (slot.isSpace) {
           const sp = document.createElement('div');
-          sp.style.width = '10px';
+          sp.style.width = '8px';
           blocksWrap.appendChild(sp);
           return;
         }
