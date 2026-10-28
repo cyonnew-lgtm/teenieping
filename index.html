@@ -30,11 +30,14 @@
       margin: 0;
       padding: 0;
       width: 100%;
+      max-width: 100vw;
       height: 100%;
       font-family: 'Jua', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
       background: radial-gradient(circle at top, #ffe3f1 0%, #fff6fa 55%, #f3e8ff 100%);
       color: var(--text-dark);
       overflow-x: hidden;
+      overscroll-behavior-x: none;
+      touch-action: manipulation;
     }
 
     /* 배경 장식 애니메이션 */
@@ -63,12 +66,14 @@
     .app-container {
       position: relative;
       z-index: 1;
+      width: 100%;
       max-width: 760px;
       margin: 0 auto;
-      padding: 4px 10px 8px;
+      padding: 4px 8px 8px;
       height: 100dvh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     .screen {
@@ -159,15 +164,16 @@
 
     .season-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       flex: 1;
       min-height: 0;
+      width: 100%;
     }
 
     @media (min-width: 640px) {
       .season-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 12px;
       }
     }
@@ -287,14 +293,16 @@
       overflow: hidden;
     }
 
-    /* 최상단 초소형 상태/도구 바 (그림 밖 최상단에 작게 배치) */
+    /* 최상단 바: 좌측에 정답듣기/힌트, 우측에 진행상태/홈 버튼 배치 (360px 화면에서도 좌우 스크롤 절대 없음!) */
     .quiz-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
       flex-shrink: 0;
-      padding: 0 2px;
+      width: 100%;
+      min-width: 0;
+      padding: 0;
     }
 
     .topbar-left, .topbar-right {
@@ -302,41 +310,52 @@
       align-items: center;
       gap: 4px;
       flex-wrap: nowrap;
+      min-width: 0;
     }
 
     .nav-btn {
       font-family: inherit;
-      font-size: 0.76rem;
+      font-size: clamp(0.7rem, 2.5vw, 0.82rem);
       background: #fff;
       color: #c2185b;
       border: 1.5px solid #ff9ec2;
       border-radius: 999px;
-      padding: 3px 8px;
+      padding: 4px 7px;
       cursor: pointer;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .status-pill {
       background: rgba(255, 255, 255, 0.9);
       border: 1.5px solid #ffc2d9;
       border-radius: 999px;
-      padding: 2px 7px;
-      font-size: 0.74rem;
+      padding: 2px 6px;
+      font-size: clamp(0.66rem, 2.3vw, 0.76rem);
       color: #ad1457;
       white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* 380px 미만 작은 화면에서는 시즌/등급 뱃지를 숨겨 상단 바 여유 공간 확보 */
+    @media (max-width: 380px) {
+      #char-season-badge {
+        display: none;
+      }
     }
 
     .helper-btn {
       font-family: inherit;
-      font-size: clamp(1.15rem, 3.8vw, 1.45rem);
-      padding: 6px 14px;
+      font-size: clamp(0.95rem, 3.5vw, 1.3rem);
+      padding: 5px 10px;
       border-radius: 999px;
-      border: 2.5px solid #ffd166;
+      border: 2px solid #ffd166;
       background: #fff9db;
       color: #b45309;
       cursor: pointer;
       white-space: nowrap;
-      box-shadow: 0 3px 0 #f59e0b;
+      box-shadow: 0 2px 0 #f59e0b;
+      flex-shrink: 0;
     }
 
     .helper-btn:active {
@@ -348,7 +367,7 @@
       border-color: #90e0ef;
       background: #e0f7fa;
       color: #0077b6;
-      box-shadow: 0 3px 0 #00b4d8;
+      box-shadow: 0 2px 0 #00b4d8;
     }
 
     .progress-track {
@@ -445,16 +464,19 @@
       display: block;
     }
 
-    /* 2단계 한글 글자 맞추기 슬롯 바 (큼직한 초대형 글자 카드 영역!) */
+    /* 2단계 한글 글자 맞추기 슬롯 바 (갤럭시/아이폰 화면 폭에 100% 맞춰지면서 초대형 크기 유지!) */
     .syllable-learn-box {
       display: none;
-      padding: 12px 8px;
+      width: 100%;
+      max-width: 100%;
+      padding: 10px 6px;
       background: linear-gradient(180deg, #fff5fa 0%, #ffe8f3 100%);
-      border: 3.5px solid #ff5c93;
-      border-radius: 22px;
+      border: 3px solid #ff5c93;
+      border-radius: 20px;
       text-align: center;
       box-shadow: 0 6px 18px rgba(255, 92, 147, 0.22);
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .syllable-learn-box.show {
@@ -476,40 +498,43 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
+      width: 100%;
+      max-width: 100%;
       flex-wrap: nowrap;
     }
 
-    /* 초대형 글자 슬롯 칸 (기본 2~3글자 기준 기존 대비 약 3배 확대!) */
+    /* 초대형 글자 슬롯 칸 (flex: 1 1 0 + min-width: 0 으로 가로 넘침 0% 보장!) */
     .syllable-slot {
-      width: clamp(96px, 27vw, 150px);
-      height: clamp(96px, 27vw, 150px);
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: clamp(82px, 24vw, 136px);
+      height: clamp(82px, 24vw, 136px);
       background: #fff;
-      border: 4px dashed #ffb3d1;
-      border-radius: 22px;
+      border: 3.5px dashed #ffb3d1;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(3.8rem, 12vw, 5.6rem);
+      font-size: clamp(3rem, 10.5vw, 5.2rem);
       color: #d0b8c8;
       transition: all 0.2s ease;
-      flex-shrink: 1;
     }
 
     /* 4~5글자 이름일 때 한 줄에 꽉 차도록 대형 크기 유지 */
     .syllable-blocks.len-medium .syllable-slot {
-      width: clamp(66px, 18vw, 110px);
-      height: clamp(80px, 21vw, 122px);
-      font-size: clamp(2.7rem, 8.2vw, 4.2rem);
-      border-radius: 18px;
+      max-width: clamp(60px, 17vw, 104px);
+      height: clamp(72px, 19vw, 114px);
+      font-size: clamp(2.2rem, 7.2vw, 3.8rem);
+      border-radius: 15px;
     }
 
     /* 6글자 이상(예: 프린세스 하츄핑)일 때 한 줄 맞춤 */
     .syllable-blocks.len-long .syllable-slot {
-      width: clamp(48px, 13vw, 86px);
-      height: clamp(68px, 17.5vw, 100px);
-      font-size: clamp(2.1rem, 6.2vw, 3.3rem);
-      border-radius: 14px;
+      max-width: clamp(44px, 12.5vw, 80px);
+      height: clamp(60px, 15.5vw, 92px);
+      font-size: clamp(1.65rem, 5.2vw, 2.9rem);
+      border-radius: 12px;
     }
 
     /* 지금 맞춰야 하는 타겟 빈칸 */
@@ -554,24 +579,25 @@
       cursor: pointer;
     }
 
-    /* 아래쪽: 1단계 4지선다 버튼 그리드 (2x2) */
+    /* 아래쪽: 1단계 4지선다 버튼 그리드 (2x2, minmax(0,1fr)로 좌우 넘침 원천 차단!) */
     .choices-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+      width: 100%;
       flex-shrink: 0;
     }
 
     /* 2단계: 6개 한글 음절 카드 그리드 (3x2) */
     .choices-grid.syllable-mode {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
     .choice-btn {
       font-family: inherit;
-      font-size: clamp(1.45rem, 5.4vw, 2.2rem);
-      padding: clamp(11px, 2vh, 18px) 12px;
+      font-size: clamp(1.25rem, 4.7vw, 2.1rem);
+      padding: clamp(10px, 1.8vh, 16px) 8px;
       border-radius: 18px;
       border: 3px solid #ffb3d1;
       background: #fff;
@@ -580,16 +606,19 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 8px;
+      gap: 6px;
       box-shadow: 0 5px 0 #f48fb1;
       transition: transform 0.1s ease, background 0.15s, border-color 0.15s;
-      min-height: 62px;
+      min-height: 60px;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
 
     /* 큰 한글 낱글자 카드 버튼 (2단계 퍼즐용 — 후보 글자 크기 확대!) */
     .syllable-card-btn {
       font-family: inherit;
-      font-size: clamp(2.6rem, 9.2vw, 3.6rem);
+      font-size: clamp(2.4rem, 8.8vw, 3.6rem);
       line-height: 1;
       padding: clamp(8px, 1.5vh, 14px) 0;
       border-radius: 20px;
@@ -602,7 +631,9 @@
       justify-content: center;
       box-shadow: 0 6px 0 #9d4edd, 0 8px 14px rgba(157, 78, 221, 0.16);
       transition: transform 0.1s ease, background 0.15s, border-color 0.15s;
-      min-height: 68px;
+      min-height: 66px;
+      width: 100%;
+      min-width: 0;
     }
 
     .syllable-card-btn:active:not(:disabled) {
@@ -649,10 +680,11 @@
 
     .choice-text {
       flex: 1;
+      min-width: 0;
       text-align: center;
       line-height: 1.15;
       word-break: keep-all;
-      padding-right: 10px;
+      padding-right: 4px;
     }
 
     /* 1번째 눌렀을 때(소리 듣기 및 선택 대기 상태) 강조 스타일 */
@@ -931,17 +963,17 @@
 
     <!-- ==================== 2. 퀴즈 게임 화면 ==================== -->
     <section id="quiz-screen" class="screen">
-      <!-- 최상단 미니 바: 그림 밖 맨 위에 작은 글씨로 배치하여 캐릭터 사진과 전혀 겹치지 않음 -->
+      <!-- 최상단 바: 좌측에 정답듣기/힌트, 우측에 진행상태/홈 버튼 배치 -->
       <div class="quiz-topbar">
         <div class="topbar-left">
-          <button class="nav-btn" onclick="goHome()">🏠 홈</button>
+          <button class="helper-btn voice-btn" onclick="speakCurrentAnswer()">🔊 정답듣기</button>
+          <button class="helper-btn" onclick="toggleHint()">💡 힌트</button>
+        </div>
+        <div class="topbar-right">
           <span class="status-pill" id="char-season-badge">1기·로열</span>
           <span class="status-pill" id="progress-pill">1/10</span>
           <span class="status-pill" id="score-pill">💖0</span>
-        </div>
-        <div class="topbar-right">
-          <button class="helper-btn voice-btn" onclick="speakCurrentAnswer()">🔊 정답듣기</button>
-          <button class="helper-btn" onclick="toggleHint()">💡 힌트</button>
+          <button class="nav-btn" onclick="goHome()">🏠 홈</button>
         </div>
       </div>
 
